@@ -67,6 +67,8 @@ void verify_files(string dir);
 
 void run_solution(string dir);
 
+void merge_file(string dir);
+
 signed main(int argc, char * argv[]){
     // Verificar si está bien el sistema operativo
     if (STATE != 0){
@@ -75,7 +77,7 @@ signed main(int argc, char * argv[]){
 
     if (__cplusplus < 201703L){
         cerr << "VERSION NO SOPORTADA POR ESTE CODIGO, DEBE SER DE 17 PARA ARRIBA" << endl;
-        exit(1);
+        exit(ERROR);
     }
 
     process_arguments(argc, argv);
@@ -84,8 +86,7 @@ signed main(int argc, char * argv[]){
 
     run_solution(argv[1]);
 
-    merge_solution();
-
+    merge_file(argv[1]);
 
     return false;
 }
@@ -299,9 +300,93 @@ void run_solution(string dir){
         } 
     };
     
-
     ejecutar(dir_test_public);
-
     ejecutar(dir_test_private);
 
+    if (lenguaje == "./solution "){
+        #if defined(_WIN32) || defined(_WIN64)
+            system("powershell Remove-Item \"./solution\"");
+        #else
+            system("rm \"./solution\"");
+        #endif
+    }
+}
+
+string get_text(string & dir){
+    string nombre_archivo = dir;
+    ifstream archivo(nombre_archivo);
+    string resultado;
+
+    if (archivo.is_open()){
+        archivo >> resultado;
+        archivo.close();
+        return resultado;
+    }
+    return "ERROR";
+}
+
+string generar_test(string & dir){
+    string ruta = dir + "/test/public/";
+    int casos = count_extensions(ruta);
+
+    string caso = "";
+    for (int test = 1; test <= casos; ++test){
+        caso += "\t\\exmp{%%INPUT\n";
+        caso += "\t\t\\caseFile{" + ruta + to_string(test) + ".in}\n";
+        caso += "\t}{%%OUTPUT\n";
+        caso += "\t\t\\caseFile{" + ruta + to_string(test) + ".ans}\n";
+        caso += "\t}%%END-OUTPUT\n";
+    }
+
+    return caso;
+}
+
+void merge_file(string  dir){
+    string abierto = "{";
+    string cerrado = "}";
+    
+    string main = "\\problemText"  
+
+    + abierto + dir + cerrado
+    +"{"+ "Entrada estandar" +"}"
+    +"{"+ "Salida estandar" +"}"
+    +"{"+ to_string(TIMELIMIT) +"}"
+    +"{"+ " " +"}"
+    +"{"+ AUTHOR +"}"
+    +"{"+ COLOR +"}\n";
+
+    string content_dir = dir + "/content.tex";
+    string input_dir = dir + "/input.tex";
+    string output_dir = dir + "/output.tex";
+
+    main += get_text(content_dir) + "\n";
+
+    main += "\\inputText\n";
+    main += get_text(input_dir) + "\n";
+
+    main += "\\outputText\n";
+    main += get_text(output_dir) + "\n";
+
+    main += "\\exampleCases\n";
+
+    main += "\\begin{example}\n";
+
+    main += generar_test(dir);
+
+    main += "\\end{example}\n";
+
+    main += "\\explanationText\n";
+
+    string ruta = dir + "/main.tex";
+    ofstream outFile(ruta);
+
+    if (outFile.is_open()){
+        outFile << main << endl;
+
+        outFile.close();
+        cout << "main.tex created sucessfully" << endl;
+    }else{
+        cerr << "NO SE PUDO ABRIR EL ARCHIVO main.tex" << endl;
+        exit(ERROR);
+    }
 }
