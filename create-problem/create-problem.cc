@@ -1,5 +1,5 @@
 #define STATE 0
-#define VERSION 0.1
+#define VERSION 0.5
 
 #define CORRECT 0
 #define ERROR 1
@@ -83,6 +83,8 @@ signed main(int argc, char * argv[]){
     verify_files(argv[1]);
 
     run_solution(argv[1]);
+
+    merge_solution();
 
 
     return false;
@@ -274,45 +276,32 @@ void run_solution(string dir){
 
     string dir_test_public = dir + "/test/public/";
     string dir_test_private = dir + "/test/private/";
+
+    auto ejecutar = [cadena, lenguaje, dir_solution](string & ruta){
+        for (const auto & entry: fs::directory_iterator(ruta)){
+            if (entry.is_regular_file() && entry.path().extension() == ".in"){
+                string ready = cadena;
+                filesystem::path salida = entry.path();
+                salida.replace_extension(".ans");
+                #if defined(_WIN32) || defined(_WIN64)
+                    ready = "Get-Content " + entry.path().string() 
+                    + " | " + lenguaje + dir_solution 
+                    + "| Out-File" + entry.path().filename().string() + ".ans";
+                #else
+                    ready = lenguaje + dir_solution 
+                    + " < " + entry.path().string() 
+                    + " > " + salida.string();
+                #endif
+
+                cout << ready << endl;
+                system(ready.c_str());
+            }
+        } 
+    };
     
-    for (const auto & entry: fs::directory_iterator(dir_test_public)){
-        if (entry.is_regular_file() && entry.path().extension() == ".in"){
-            string ready = cadena;
-            filesystem::path salida = entry.path();
-            salida.replace_extension(".ans");
-            #if defined(_WIN32) || defined(_WIN64)
-                ready = "Get-Content " + entry.path().string() 
-                + " | " + lenguaje + dir_solution 
-                + "| Out-File" + entry.path().filename().string() + ".ans";
-            #else
-                ready = lenguaje + dir_solution 
-                + " < " + entry.path().string() 
-                + " > " + salida.string();
-            #endif
 
-            cout << ready << endl;
-            system(ready.c_str());
-        }
-    }
+    ejecutar(dir_test_public);
 
-    for (const auto & entry: fs::directory_iterator(dir_test_private)){
-        if (entry.is_regular_file() && entry.path().extension() == ".in"){
-            string ready = cadena;
-            filesystem::path salida = entry.path();
-            salida.replace_extension(".ans");
-            #if defined(_WIN32) || defined(_WIN64)
-                ready = "Get-Content " + entry.path().string() 
-                + " | " + lenguaje + dir_solution 
-                + "| Out-File" + entry.path().filename().string() + ".ans";
-            #else
-                ready = lenguaje + dir_solution 
-                + " < " + entry.path().string() 
-                + " > " + salida.string();
-            #endif
-
-            cout << ready << endl;
-            system(ready.c_str());
-        }
-    }
+    ejecutar(dir_test_private);
 
 }
