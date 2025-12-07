@@ -1,0 +1,258 @@
+#pragma once
+
+#ifndef CHECKER
+#define CHECKER
+
+#define ANSWER_CORRECT 42
+#define WRONG_ANSWER 43
+
+#define FILENAME_AUTHOR_MESSAGE "teammessage.txt"
+#define FILENAME_JUDGE_MESSAGE "judgemessage.txt"
+#define FILENAME_SCOREBOARD "score.txt"
+
+#define USAGE "%s: judge_in judge_ans feedback_dir < author_out\n"
+
+#include <iostream>
+#include <cstdlib>
+#include <string>
+#include <cctype>
+
+typedef void (*feedback_function)(const std::string &, ...);
+
+using namespace std;
+
+std::ifstream judge_in, judge_ans;
+std::istream author_out(std::cin.rdbuf());
+
+char *feedbackdir = NULL;
+
+void vreport_feedback(const std::string &category,
+                      const std::string &msg,
+                      va_list pvar) {
+    std::ostringstream fname;
+    if (feedbackdir)
+        fname << feedbackdir << '/';
+    fname << category;
+    FILE *f = fopen(fname.str().c_str(), "a");
+    assert(f);
+    vfprintf(f, msg.c_str(), pvar);
+    fclose(f);
+}
+
+void report_feedback(const std::string &category, const std::string &msg, ...) {
+    va_list pvar;
+    va_start(pvar, msg);
+    vreport_feedback(category, msg, pvar);
+}
+
+void author_message(const std::string &msg, ...) {
+    va_list pvar;
+    va_start(pvar, msg);
+    vreport_feedback(FILENAME_AUTHOR_MESSAGE, msg, pvar);
+}
+
+void judge_message(const std::string &msg, ...) {
+    va_list pvar;
+    va_start(pvar, msg);
+    vreport_feedback(FILENAME_JUDGE_MESSAGE, msg, pvar);
+}
+
+void wrong_answer(const std::string &msg, ...) {
+    va_list pvar;
+    va_start(pvar, msg);
+    vreport_feedback(FILENAME_JUDGE_MESSAGE, msg, pvar);
+    exit(EXITCODE_WA);
+}
+
+void judge_error(const std::string &msg, ...) {
+    va_list pvar;
+    va_start(pvar, msg);
+    vreport_feedback(FILENAME_JUDGE_MESSAGE, msg, pvar);
+    assert(0);
+}
+
+void accept() {
+    exit(EXITCODE_AC);
+}
+
+void accept_with_score(double scorevalue) {
+    report_feedback(FILENAME_SCORE, "%.9le", scorevalue);
+    exit(EXITCODE_AC);
+}
+
+
+bool is_directory(const char *path) {
+    struct stat entry;
+    return stat(path, &entry) == 0 && S_ISDIR(entry.st_mode);
+}
+
+void init_io(int argc, char **argv) {
+    if(argc < 4) {
+        fprintf(stderr, USAGE, argv[0]);
+        judge_error("Usage: %s judgein judgeans feedbackdir [opts] < userout", argv[0]);
+    }
+
+    if (!is_directory(argv[3])) {
+        judge_error("%s: %s is not a directory\n", argv[0], argv[3]);
+    }
+    feedbackdir = argv[3];
+
+    judge_in.open(argv[1], std::ios_base::in);
+    if (judge_in.fail()) {
+        judge_error("%s: failed to open %s\n", argv[0], argv[1]);
+    }
+
+    judge_ans.open(argv[2], std::ios_base::in);
+    if (judge_ans.fail()) {
+        judge_error("%s: failed to open %s\n", argv[0], argv[2]);
+    }
+
+    author_out.rdbuf(std::cin.rdbuf());
+}
+
+
+// =================================
+
+vector<string> split(string s, const string& delimiter) {
+    vector<string> tokens;
+    size_t pos = 0;
+    string token;
+    while ((pos = s.find(delimiter)) != string::npos) {
+        token = s.substr(0, pos);
+        if ((int) token.length() != 0) tokens.push_back(token);
+        s.erase(0, pos + delimiter.length());
+    }
+    tokens.push_back(s);
+
+    return tokens;
+}
+
+
+
+string read_line(istream &state, bool EOL = true){
+    if (state.eof()){
+        wrong_answer("Estamos en el EOF");
+    }
+
+    state.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    string linea;
+    getline(state, linea);
+
+    if (!EOL){
+        state.putback('\n');
+    }
+
+    return linea;
+}
+
+bool is_number(const string & s){
+    return !s.empty() && all_of(s.begin(), s.end(), ::isdigit);
+}
+
+int read_int(istream &state, bool EOF = true){
+    string linea = read_line(state, EOF);
+    vector<string> lineas = split(linea, " ");
+    if ((int) lineas.size() != 1){
+        if (is_number(lineas[0])){
+            return stoi(lineas[0]);
+        }else{
+            wrong_answer("%s debe ser un numero", lineas[0]);
+        }
+    }else{
+        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+    }
+}
+
+vector<int> read_ints(istream &state, int n= 1, bool EOF = true){
+    string linea = read_line(state, EOF);
+    vector<string> lineas = split(linea, " ");
+    if ((int) lineas.size() != n){
+        vector<int> ans;
+        for (int i = 0; i < n; ++i){
+            if (is_number(lineas[i])){
+                ans.push_back(stoi(lineas[i]));
+            }else{
+                wrong_answer("La posicion %i debe ser un numero", i);
+            }
+        }
+        return ans;
+    }else{
+        wrong_answer("Debe tener %i elemento spero tiene %i", n, (int) lineas.size());
+    }
+}
+
+
+long read_long(istream &state, bool EOF = true){
+    string linea = read_line(state, EOF);
+    vector<string> lineas = split(linea, " ");
+    if ((int) lineas.size() != 1){
+        if (is_number(lineas[0])){
+            return stol(lineas[0]);
+        }else{
+            wrong_answer("%s debe ser un numero", lineas[0]);
+        }
+    }else{
+        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+    }
+}
+
+vector<long> read_longs(istream &state, int n= 1, bool EOF = true){
+    string linea = read_line(state, EOF);
+    vector<string> lineas = split(linea, " ");
+    if ((int) lineas.size() != n){
+        vector<long> ans;
+        for (int i = 0; i < n; ++i){
+            if (is_number(lineas[i])){
+                ans.push_back(stol(lineas[i]));
+            }else{
+                wrong_answer("La posicion %i debe ser un numero", i);
+            }
+        }
+        return ans;
+    }else{
+        wrong_answer("Debe tener %i elemento spero tiene %i", n, (int) lineas.size());
+    }
+}
+
+bool is_EOF(istream &state){
+    if (state.eof()){
+        return true;
+    }
+    return false;
+}
+
+void ensure(bool estado, string mensaje = "ERROR"){
+    if (!ensure){
+        wrong_answer(mensaje);
+    }
+}
+
+bool is_float(const std::string& s) {
+    try {
+        size_t pos;
+        std::stod(s, &pos);
+        return pos == s.size(); 
+    } catch (...) {
+        return false;            
+    }
+}
+
+float read_float(istream &state, bool EOF = true){
+    string linea = read_line(state, EOF);
+    vector<string> lineas = split(linea, " ");
+    if ((int) lineas.size() != 1){
+        if (is_float(lineas[0])){
+            return stod(lineas[0]);
+        }else{
+            wrong_answer("%s debe ser un numero", lineas[0]);
+        }
+    }else{
+        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+    }
+}
+
+
+
+
+// READSPACE, READEOLN
+// READDOUBLE

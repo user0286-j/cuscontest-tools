@@ -25,6 +25,7 @@
 #include<fstream>
 #include<filesystem>
 #include<utility>
+#include<chrono>
 
 using namespace std;
 
@@ -244,6 +245,11 @@ pair<string, string> get_solution_dir(string & dir){
     cerr << "SE PRODUJO UN ERROR INESPERADO" << endl;
     exit(ERROR);
     return {0,0};
+}
+
+uint64_t timeMillisec(){
+    using namespace chrono;
+    return duration_cast<milliseconds>(system_clock::now().time_since_epoch()).count();
 }
 
 
