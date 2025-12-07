@@ -1,0 +1,2 @@
+#!/bin/sh
+./run judge_in2 judge_ans2 feedback_dir/ < user_out2

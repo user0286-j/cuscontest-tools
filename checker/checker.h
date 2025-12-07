@@ -1,25 +1,32 @@
 #pragma once
 
-#ifndef CHECKER
-#define CHECKER
-
 #define ANSWER_CORRECT 42
+#define EXITCODE_AC 42
+#define EXITCODE_WA 43
 #define WRONG_ANSWER 43
 
 #define FILENAME_AUTHOR_MESSAGE "teammessage.txt"
 #define FILENAME_JUDGE_MESSAGE "judgemessage.txt"
-#define FILENAME_SCOREBOARD "score.txt"
+#define FILENAME_SCORE "score.txt"
 
 #define USAGE "%s: judge_in judge_ans feedback_dir < author_out\n"
 
-#include <iostream>
+#include <sys/stat.h>
+#include <cassert>
+#include <cstdarg>
 #include <cstdlib>
+#include <iostream>
+#include <fstream>
+#include <sstream>
+#include <vector>
 #include <string>
-#include <cctype>
+#include <string.h>
+#include <limits>
 
 typedef void (*feedback_function)(const std::string &, ...);
 
 using namespace std;
+
 
 std::ifstream judge_in, judge_ans;
 std::istream author_out(std::cin.rdbuf());
@@ -113,16 +120,25 @@ void init_io(int argc, char **argv) {
 
 // =================================
 
-vector<string> split(string s, const string& delimiter) {
+vector<string> split(string s, const char delimiter = ' ') {
     vector<string> tokens;
-    size_t pos = 0;
-    string token;
-    while ((pos = s.find(delimiter)) != string::npos) {
-        token = s.substr(0, pos);
-        if ((int) token.length() != 0) tokens.push_back(token);
-        s.erase(0, pos + delimiter.length());
+    int fin = (int) s.length();
+    int pos = 0;
+    string token = "";
+    while (pos < fin){
+        if (s[pos] == delimiter){
+            if (token != ""){
+                tokens.push_back(token);
+                token = "";
+            }
+        }else{
+            token += s[pos];
+        }
+        pos++;
     }
-    tokens.push_back(s);
+    if (token != ""){
+        tokens.push_back(token);
+    }
 
     return tokens;
 }
@@ -134,9 +150,11 @@ string read_line(istream &state, bool EOL = true){
         wrong_answer("Estamos en el EOF");
     }
 
-    state.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
+    //state.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     string linea;
     getline(state, linea);
+    //cout<<"I:";
+    //cout<<linea<<endl;
 
     if (!EOL){
         state.putback('\n');
@@ -145,84 +163,107 @@ string read_line(istream &state, bool EOL = true){
     return linea;
 }
 
-bool is_number(const string & s){
-    return !s.empty() && all_of(s.begin(), s.end(), ::isdigit);
+bool is_number(string ss){
+    if (ss.empty()) return false;
+
+    for (int i = 0; i < (int) ss.length(); ++i){
+        if (!std::isdigit(static_cast<unsigned char>(ss[i]))){
+            return false;
+        }
+    }
+
+    return true;
 }
 
-int read_int(istream &state, bool EOF = true){
-    string linea = read_line(state, EOF);
-    vector<string> lineas = split(linea, " ");
-    if ((int) lineas.size() != 1){
+int read_int(istream &state, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+
+    if ((int) lineas.size() == 1){
         if (is_number(lineas[0])){
-            return stoi(lineas[0]);
+            return std::stoi(lineas[0]);
         }else{
-            wrong_answer("%s debe ser un numero", lineas[0]);
+            wrong_answer("%s debe ser un numero\n", lineas[0]);
         }
     }else{
-        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+        wrong_answer("Solo debe tener un elemento pero tiene %d\n", (int) lineas.size());
     }
+
+    return -1;
 }
 
-vector<int> read_ints(istream &state, int n= 1, bool EOF = true){
-    string linea = read_line(state, EOF);
-    vector<string> lineas = split(linea, " ");
-    if ((int) lineas.size() != n){
-        vector<int> ans;
+vector<int> read_ints(istream &state, int n= 1, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+    vector<int> ans;
+    
+    if ((int) lineas.size() == n){
+        
         for (int i = 0; i < n; ++i){
             if (is_number(lineas[i])){
-                ans.push_back(stoi(lineas[i]));
+                ans.push_back(std::stoi(lineas[i]));
             }else{
-                wrong_answer("La posicion %i debe ser un numero", i);
+                wrong_answer("La posicion %d debe ser un numero\n", i);
             }
         }
         return ans;
     }else{
-        wrong_answer("Debe tener %i elemento spero tiene %i", n, (int) lineas.size());
+        wrong_answer("Debe tener %d elemento pero tiene %d\n", n, (int) lineas.size());
     }
+    return ans;
 }
 
 
-long read_long(istream &state, bool EOF = true){
-    string linea = read_line(state, EOF);
-    vector<string> lineas = split(linea, " ");
-    if ((int) lineas.size() != 1){
+long read_long(istream &state, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+    if ((int) lineas.size() == 1){
         if (is_number(lineas[0])){
-            return stol(lineas[0]);
+            return std::stol(lineas[0]);
         }else{
-            wrong_answer("%s debe ser un numero", lineas[0]);
+            wrong_answer("%s debe ser un numero\n", lineas[0]);
         }
     }else{
-        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+        wrong_answer("Solo debe tener un elemento pero tiene %d\n", (int) lineas.size());
     }
+    return -1;
 }
 
-vector<long> read_longs(istream &state, int n= 1, bool EOF = true){
-    string linea = read_line(state, EOF);
-    vector<string> lineas = split(linea, " ");
-    if ((int) lineas.size() != n){
-        vector<long> ans;
+vector<long> read_longs(istream &state, int n= 1, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+    vector<long> ans;
+    if ((int) lineas.size() == n){
+        
         for (int i = 0; i < n; ++i){
             if (is_number(lineas[i])){
-                ans.push_back(stol(lineas[i]));
+                ans.push_back(std::stol(lineas[i]));
             }else{
-                wrong_answer("La posicion %i debe ser un numero", i);
+                wrong_answer("La posicion %d debe ser un numero\n", i);
             }
         }
         return ans;
     }else{
-        wrong_answer("Debe tener %i elemento spero tiene %i", n, (int) lineas.size());
+        wrong_answer("Debe tener %d elemento spero tiene %d\n", n, (int) lineas.size());
     }
+
+    return ans;
 }
 
-bool is_EOF(istream &state){
+void read_EOF(istream &state){
+    char c;
+    while (state.get(c)){
+        if (!((int) c == 10 || (int) c == 32)){
+            wrong_answer("Se esperaba terminar, pero hay más elementos");
+        }
+    }
     if (state.eof()){
-        return true;
+        accept();
     }
-    return false;
 }
 
 void ensure(bool estado, string mensaje = "ERROR"){
-    if (!ensure){
+    if (!estado){
         wrong_answer(mensaje);
     }
 }
@@ -237,20 +278,33 @@ bool is_float(const std::string& s) {
     }
 }
 
-float read_float(istream &state, bool EOF = true){
-    string linea = read_line(state, EOF);
-    vector<string> lineas = split(linea, " ");
-    if ((int) lineas.size() != 1){
+float read_float(istream &state, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+    if ((int) lineas.size() == 1){
         if (is_float(lineas[0])){
             return stod(lineas[0]);
         }else{
-            wrong_answer("%s debe ser un numero", lineas[0]);
+            wrong_answer("%s debe ser un numero\n", lineas[0]);
         }
     }else{
-        wrong_answer("Solo debe tener un elemento pero tiene %s", (int) lineas.size());
+        wrong_answer("Solo debe tener un elemento pero tiene %d\n", (int) lineas.size());
     }
+
+    return -1;
 }
 
+vector<string> read_strings(istream & state, int n = 1, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+
+    if ((int) lineas.size() == n){
+        return split(linea, ' ');
+    }
+    wrong_answer("Tamano incorrecto\n");
+
+    return vector<string> (1,"ERROR");
+}
 
 
 
