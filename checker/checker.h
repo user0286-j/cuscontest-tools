@@ -1,5 +1,7 @@
 #pragma once
 
+#define version 1.0
+
 #define ANSWER_CORRECT 42
 #define EXITCODE_AC 42
 #define EXITCODE_WA 43
@@ -306,7 +308,36 @@ vector<string> read_strings(istream & state, int n = 1, bool END = true){
     return vector<string> (1,"ERROR");
 }
 
+bool is_range(int element, int mi, int ma){
+    return ((mi <= element) && (element <= ma));
+}
 
+vector<vector<int>> read_graph(istream & state, bool dirigido = false){
+    vector<int> datos = read_ints(state, 2);
+    int n = datos[0];
+    int m = datos[1];
+    vector<vector<int>> grafo(n+1);
+    for (int i = 0; i < m; ++i){
+        vector<int> edge = read_ints(state, 2);
+        int x = edge[0];
+        int y = edge[1];
+
+        if (!is_range(x, 1, n)){
+            wrong_answer("el vertice %d esta fuera del rango", x);
+        }
+
+        if (!is_range(y, 1, n)){
+            wrong_answer("el vertice %d esta fuera del rango", y);
+        }
+
+        grafo[x].push_back(y);
+        if (!dirigido){
+            grafo[y].push_back(x);
+        }
+    }
+
+    return grafo;
+}
 
 // READSPACE, READEOLN
 // READDOUBLE
