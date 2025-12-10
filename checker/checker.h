@@ -155,8 +155,6 @@ string read_line(istream &state, bool EOL = true){
     //state.ignore(std::numeric_limits<std::streamsize>::max(), '\n');
     string linea;
     getline(state, linea);
-    //cout<<"I:";
-    //cout<<linea<<endl;
 
     if (!EOL){
         state.putback('\n');
@@ -337,6 +335,25 @@ vector<vector<int>> read_graph(istream & state, bool dirigido = false){
     }
 
     return grafo;
+}
+
+namespace extra_contidional{
+    void is_permutation(vector<int> v){
+        int n = (int) v.size();
+        vector<int> numeros(n+1,0);
+        for (int i = 0; i < n; ++i){
+
+            if (!((v[i] >= 1) && (v[i] <= n))){
+                wrong_answer("El número de la posición %d es %d, por lo cual, no pertenece a una permutación de %d\n", i, v[i], n);
+            }
+
+            if (numeros[v[i]] != 0){
+                wrong_answer("El número %d se repite más de una vez\n", v[i]);
+            }
+
+            numeros[v[i]] = 1;
+        }
+    }
 }
 
 // READSPACE, READEOLN
