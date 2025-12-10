@@ -22,10 +22,8 @@ int main(int argc, char * argv[]){
             vector<string> resultado_original = read_strings(judge_ans,2);
             vector<string> resultado_participante= read_strings(author_out,2);
 
-            if (!((resultado_original[0] == resultado_participante[0]) && 
-                (resultado_original[1] == resultado_participante[1]))){
-                    wrong_answer("No coincide con las opciones\n");
-                }
+            ensure(((resultado_original[0] == resultado_participante[0]) && (resultado_original[1] == resultado_participante[1]))
+                   , "No coincide con las opciones\n");
         }else{
             vector<int> resultado_participante = read_ints(author_out, x);
             read_ints(judge_ans, x);
