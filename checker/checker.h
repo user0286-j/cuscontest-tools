@@ -262,9 +262,11 @@ void read_EOF(istream &state){
     }
 }
 
-void ensure(bool estado, string mensaje = "ERROR"){
+void ensure(bool estado, string mensaje = "ERROR", ...){
+    va_list pvar;
+    va_start(pvar, mensaje);
     if (!estado){
-        wrong_answer(mensaje);
+        vreport_feedback(FILENAME_JUDGE_MESSAGE, mensaje, pvar);
     }
 }
 
