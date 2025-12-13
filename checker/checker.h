@@ -29,6 +29,8 @@ typedef void (*feedback_function)(const std::string &, ...);
 
 using namespace std;
 
+#define max(a,b) (a> b? a: b)
+
 
 std::ifstream judge_in, judge_ans;
 std::istream author_out(std::cin.rdbuf());
@@ -122,6 +124,13 @@ void init_io(int argc, char **argv) {
 
 // =================================
 
+template<typename T>
+bool can_read(const std::string & s, T& out){
+    std::stringstream ss(s);
+    ss >> out;
+    return ss && ss.eof(); 
+}
+
 vector<string> split(string s, const char delimiter = ' ') {
     vector<string> tokens;
     int fin = (int) s.length();
@@ -190,6 +199,25 @@ int read_int(istream &state, bool END = true){
     }
 
     return -1;
+}
+
+template <typename T>
+T read_element(istream &state, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+
+    if ((int) lineas.size() != 1){
+        wrong_answer("Solo debe haber un elemento pero hay %d elementos\n", (int) lineas.size());
+    }
+
+    T element;
+    if (can_read(linea, element)){
+        return element;
+    }else{
+        wrong_answer("La conversion es incompatible en read_element\n");
+    }
+
+    return element;
 }
 
 vector<int> read_ints(istream &state, int n= 1, bool END = true){
@@ -308,6 +336,30 @@ vector<string> read_strings(istream & state, int n = 1, bool END = true){
     return vector<string> (1,"ERROR");
 }
 
+template <typename T>
+vector<T> read_elements(istream & state, int n = 1, bool END = true){
+    string linea = read_line(state, END);
+    vector<string> lineas = split(linea, ' ');
+
+    vector<T> ans;
+
+    if ((int) lineas.size() != n){
+        wrong_answer("La lista tiene %d elementos, pero solo debe haber %d elementos\n", (int) lineas.size(), n);
+        return ans;
+    }
+
+    for (int i = 0; i < n; ++i){
+        T element;
+        if (can_read<T>(lineas[i], element)){
+            ans.push_back(element);
+        }else{
+            wrong_answer("Elemento leido no es compatible en read_elements\n");
+        }
+    }
+
+    return ans;
+}
+
 bool is_range(int element, int mi, int ma){
     return ((mi <= element) && (element <= ma));
 }
@@ -337,6 +389,77 @@ vector<vector<int>> read_graph(istream & state, bool dirigido = false){
     }
 
     return grafo;
+}
+
+
+
+void absolute_error(double ans, double out, int precision = 6){
+    string s_ans = std::to_string(ans);
+    string s_out = std::to_string(out);
+
+    int pos = 0;
+    int ma = max((int) s_ans.length(), (int) s_out.length());
+
+    bool dot = false;
+    int count = 0;
+    while ((pos < ma) && (count < precision)){
+        if (!dot){
+            if (s_ans[pos] != s_out[pos]){
+                wrong_answer("Son números distintos");
+            }
+
+            if (s_ans[pos] == '.'){
+                dot |= true;
+            }
+            pos++;
+        }else{
+            if (s_ans[pos] != s_out[pos]){
+                wrong_answer("En el decimal %d, los valores son diferentes %s, %s", count+1, s_ans[pos], s_out[pos]);
+            }
+            pos++;
+            count++;
+        }
+    }
+}
+
+void absolute_error(string ans, string out, int precision = 6){
+    string s_ans = ans;
+    string s_out = out;
+
+    int pos = 0;
+    int ma = max((int) s_ans.length(), (int) s_out.length());
+
+    bool dot = false;
+    int count = 0;
+    while ((pos < ma) && (count < precision)){
+        if (!dot){
+            if (s_ans[pos] != s_out[pos]){
+                wrong_answer("Son números distintos");
+            }
+
+            if (s_ans[pos] == '.'){
+                dot |= true;
+            }
+            pos++;
+        }else{
+            if (s_ans[pos] != s_out[pos]){
+                wrong_answer("En el decimal %d, los valores son diferentes %s, %s", count+1, s_ans[pos], s_out[pos]);
+            }
+            pos++;
+            count++;
+        }
+    }
+}
+
+template <typename T>
+vector<vector<T>> read_matrix(istream & state, int rows, int columns){
+    vector<vector<T>> ans;
+    for (int i = 0; i < rows; ++i){
+        vector<T> elements = read_elements<T>(state, columns);
+        ans.push_back(elements);
+    }
+
+    return ans;
 }
 
 namespace extra_contidional{
