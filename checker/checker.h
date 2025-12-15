@@ -1,6 +1,6 @@
 #pragma once
 
-#define version 1.0
+#define version 2.0
 
 #define ANSWER_CORRECT 42
 #define EXITCODE_AC 42
@@ -24,6 +24,7 @@
 #include <string>
 #include <string.h>
 #include <limits>
+#include <queue>
 
 typedef void (*feedback_function)(const std::string &, ...);
 
@@ -364,10 +365,17 @@ bool is_range(int element, int mi, int ma){
     return ((mi <= element) && (element <= ma));
 }
 
-vector<vector<int>> read_graph(istream & state, bool dirigido = false){
-    vector<int> datos = read_ints(state, 2);
-    int n = datos[0];
-    int m = datos[1];
+vector<vector<int>> read_graph(istream & state, bool dirigido = false, bool input = false, int nn = 0, int mm = 0){
+    int n,m;
+    if (input){
+        n = nn;
+        m = mm;
+    }else{
+        vector<int> datos = read_ints(state, 2);
+        n = datos[0];
+        m = datos[1];
+    }
+    
     vector<vector<int>> grafo(n+1);
     for (int i = 0; i < m; ++i){
         vector<int> edge = read_ints(state, 2);
@@ -477,6 +485,41 @@ namespace extra_contidional{
             }
 
             numeros[v[i]] = 1;
+        }
+    }
+
+    template<typename T>
+    void is_vector_range(vector<T> arr, T mi = 0, T ma = 1e9){
+        for (int i = 0; i < (int) arr.size(); ++i){
+            if (v[i] < mi){
+                wrong_answer("El numero de la posicion %d, es menor a %d", i, mi);
+            }
+            if (v[i] > ma){
+                wrong_answer("El numero de la posicion %d, es mayor a %d", i, ma);
+            }
+        }
+    }
+
+    // Comienza desde 1
+    void is_graph_connect(vector<vector<int>> G, int inicio = 1){ 
+        queue<int> q; q.push(inicio);
+        int n = (int) G.size();
+        vector<int> visited(n+1,0);
+        while(!q.empty()){
+            int ve = q.front(); q.pop();
+            visited[ve] = 1;
+            for (auto u: G[ve]){
+                if (!visited[u]){
+                    visited[u] = 1;
+                    q.push(u);
+                }
+            }
+        }
+
+        for (int i = 1; i <= n; ++i){
+            if (!visited[i]){
+                wrong_answer("el vertice %d esta desconectado", i);
+            }
         }
     }
 }

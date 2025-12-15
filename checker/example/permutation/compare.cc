@@ -14,7 +14,8 @@ int main(int argc, char * argv[]){
     int casos = read_element<int>(judge_in);
     
     for (int i = 0; i < casos; ++i){
-        int x = read_int(judge_in);
+        int x = read_element<int> (judge_in);
+
 
         // Agarramos cada caso de prueba del jurado y del usuario
         if (x == 2 || x == 3){
@@ -25,7 +26,7 @@ int main(int argc, char * argv[]){
                    , "No coincide con las opciones\n");
         }else{
             vector<int> resultado_participante = read_elements<int>(author_out, x);
-            read_ints(judge_ans, x);
+            read_elements<int> (judge_ans, x);
             extra_contidional::is_permutation(resultado_participante);
             for (int i = 1; i < x; ++i){
                 if (abs(resultado_participante[i] - resultado_participante[i-1]) == 1){
