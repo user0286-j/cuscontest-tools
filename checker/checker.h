@@ -489,8 +489,8 @@ namespace extra_contidional{
     }
 
     template<typename T>
-    void is_vector_range(vector<T> arr, T mi = 0, T ma = 1e9){
-        for (int i = 0; i < (int) arr.size(); ++i){
+    void is_vector_range(vector<T> v, T mi = 0, T ma = 1e9){
+        for (int i = 0; i < (int) v.size(); ++i){
             if (v[i] < mi){
                 wrong_answer("El numero de la posicion %d, es menor a %d", i, mi);
             }
@@ -504,7 +504,7 @@ namespace extra_contidional{
     void is_graph_connect(vector<vector<int>> G, int inicio = 1){ 
         queue<int> q; q.push(inicio);
         int n = (int) G.size();
-        vector<int> visited(n+1,0);
+        vector<int> visited(n,0);
         while(!q.empty()){
             int ve = q.front(); q.pop();
             visited[ve] = 1;
@@ -516,7 +516,7 @@ namespace extra_contidional{
             }
         }
 
-        for (int i = 1; i <= n; ++i){
+        for (int i = 1; i < n; ++i){
             if (!visited[i]){
                 wrong_answer("el vertice %d esta desconectado", i);
             }
